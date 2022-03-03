@@ -1,0 +1,3 @@
+project = "Example"
+environment = "Staging"
+region = "us-east-1"

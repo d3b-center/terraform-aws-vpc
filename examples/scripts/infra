@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${TERRAFORM_AWS_VPC_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0") COMMAND OPTION[S]
+Execute Terraform subcommands.
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        TERRAFORM_DIR="$(dirname "$0")/../terraform"
+
+        pushd "${TERRAFORM_DIR}"
+
+        case "${1}" in
+        plan)
+            # Clear stale modules, then re-initialize.
+            rm -rf .terraform
+            terraform init
+
+            terraform plan \
+                -var-file="terraform-aws-vpc.tfvars" \
+                -out="terraform-aws-vpc.tfplan"
+            ;;
+        apply)
+            terraform apply "terraform-aws-vpc.tfplan"
+            ;;
+        destroy)
+            terraform destroy \
+                -var-file="terraform-aws-vpc.tfvars" \
+                -auto-approve
+            ;;
+        *)
+            echo "ERROR: I don't have support for that Terraform subcommand!"
+            exit 1
+            ;;
+        esac
+
+        popd
+    fi
+fi

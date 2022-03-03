@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${CI}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Ensure the Terraform source code is properly formatted.
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        terraform fmt -check .
+        terraform fmt -check ./examples/terraform/
+    fi
+fi
