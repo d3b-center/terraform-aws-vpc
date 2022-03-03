@@ -109,6 +109,7 @@ resource "aws_security_group_rule" "bastion_https_egress" {
 - `private_subnets_ids` - A list of VPC private subnet IDs.
 - `vpc_endpoint_security_group_id` - Security group associated with the interface VPC endpoints for adding rules.
 - `bastion_security_group_id` - Security group associated with the bastion for adding rules.
+- `bastion_iam_role_name` - IAM role associated with the bastion for attaching IAM policies.
 - `cidr_block` - The CIDR range for the entire VPC.
 - `ipv6_cidr_block` - The IPv6 CIDR range for the entire VPC.
 - `nat_gateway_ips` - Public IP addresses of the VPC NAT gateways.

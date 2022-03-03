@@ -23,6 +23,11 @@ output "bastion_security_group_id" {
   description = "Security group associated with the bastion for adding rules."
 }
 
+output "bastion_iam_role_name" {
+  value       = aws_iam_role.bastion.name
+  description = "IAM role associated with the bastion for attaching IAM policies."
+}
+
 output "cidr_block" {
   value       = var.cidr_block
   description = "The CIDR range for the entire VPC."
