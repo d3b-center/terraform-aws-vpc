@@ -49,7 +49,7 @@ region = "us-east-1"
 Next, launch an instance of the included Terraform container image:
 
 ```console
-export AWS_PROFILE=d3b-sandbox
+export AWS_PROFILE=sandbox
 docker-compose run --rm terraform
 bash-5.1#
 ```
