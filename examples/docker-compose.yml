@@ -1,0 +1,11 @@
+services:
+  terraform:
+    image: ghcr.io/d3b-center/terraform:1.1.6
+    volumes:
+      - ../:/usr/local/src
+      - $HOME/.aws:/.aws
+    environment:
+      - AWS_PROFILE
+      - TERRAFORM_AWS_VPC_DEBUG=1
+    working_dir: /usr/local/src/examples
+    entrypoint: bash

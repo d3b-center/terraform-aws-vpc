@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - feature/jrb/bootstrap
+  pull_request:
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    container: hashicorp/terraform:latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Bash
+        run: apk add --no-cache bash
+
+      - name: Execute cibuild
+        run: ./scripts/cibuild
