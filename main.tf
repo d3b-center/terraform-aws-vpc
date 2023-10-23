@@ -180,10 +180,6 @@ resource "aws_security_group" "vpc_endpoint" {
   )
 }
 
-data "aws_vpc" "vpc_data" {
-  id = aws_vpc.default.id
-}
-
 resource "aws_security_group_rule" "vpc_endpoint_ingress" {
   type      = "ingress"
   from_port = 443
@@ -191,7 +187,7 @@ resource "aws_security_group_rule" "vpc_endpoint_ingress" {
   protocol  = "tcp"
 
   security_group_id        = aws_security_group.vpc_endpoint.id
-  cidr_blocks = [data.aws_vpc.vpc_data.cidr_block]
+  cidr_blocks = [var.cidr_block]
 
   description = "Allow inbound TCP traffic from the VPC on 443."
 }
