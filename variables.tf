@@ -45,23 +45,6 @@ variable "availability_zones" {
   description = "A list of availability zones for subnet placement."
 }
 
-variable "bastion_ami" {
-  type        = string
-  description = "An AMI ID for the bastion."
-}
-
-variable "bastion_instance_type" {
-  type        = string
-  default     = "t3.nano"
-  description = "An instance type for the bastion."
-}
-
-variable "aws_ssm_managed_instance_core_policy_arn" {
-  type        = string
-  default     = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  description = "ARN to the canned AmazonSSMManagedInstanceCore policy."
-}
-
 variable "tags" {
   type        = map(string)
   default     = {}

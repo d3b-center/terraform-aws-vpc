@@ -1,6 +1,7 @@
 #
 # VPC resources
 #
+
 resource "aws_vpc" "default" {
   cidr_block                       = var.cidr_block
   enable_dns_support               = true
@@ -20,7 +21,7 @@ resource "aws_internet_gateway" "default" {
 
   tags = merge(
     {
-      Name = "gwInternet"
+      Name = "${var.name}-gwInternet"
     },
     var.tags
   )
@@ -31,7 +32,7 @@ resource "aws_egress_only_internet_gateway" "default" {
 
   tags = merge(
     {
-      Name = "gwInternetEgressOnly"
+      Name = "${var.name}-gwInternetEgressOnly"
     },
     var.tags
   )
@@ -44,7 +45,7 @@ resource "aws_route_table" "private" {
 
   tags = merge(
     {
-      Name = "PrivateRouteTable"
+      Name = "${var.name}-PrivateRouteTable"
     },
     var.tags
   )
@@ -72,7 +73,7 @@ resource "aws_route_table" "public" {
 
   tags = merge(
     {
-      Name = "PublicRouteTable"
+      Name = "${var.name}-PublicRouteTable"
     },
     var.tags
   )
@@ -105,7 +106,7 @@ resource "aws_subnet" "private" {
 
   tags = merge(
     {
-      Name = "PrivateSubnet"
+      Name = "${var.name}-PrivateSubnet"
     },
     var.tags
   )
@@ -127,7 +128,7 @@ resource "aws_subnet" "public" {
 
   tags = merge(
     {
-      Name = "PublicSubnet"
+      Name = "${var.name}-PublicSubnet"
     },
     var.tags
   )
@@ -158,7 +159,7 @@ resource "aws_vpc_endpoint" "s3" {
 
   tags = merge(
     {
-      Name = "endpointS3"
+      Name = "${var.name}-endpointS3"
     },
     var.tags
   )
@@ -173,11 +174,24 @@ resource "aws_security_group" "vpc_endpoint" {
 
   tags = merge(
     {
-      Name = "sgVpcEndpoint"
+      Name = "${var.name}-sgVpcEndpoint"
     },
     var.tags
   )
 }
+
+resource "aws_security_group_rule" "vpc_endpoint_ingress" {
+  type      = "ingress"
+  from_port = 443
+  to_port   = 443
+  protocol  = "tcp"
+
+  security_group_id = aws_security_group.vpc_endpoint.id
+  cidr_blocks       = [var.cidr_block]
+
+  description = "Allow inbound TCP traffic from the VPC on 443."
+}
+
 
 resource "aws_vpc_endpoint" "ec2messages" {
   vpc_id            = aws_vpc.default.id
@@ -193,7 +207,7 @@ resource "aws_vpc_endpoint" "ec2messages" {
 
   tags = merge(
     {
-      Name = "endpointEc2Messages"
+      Name = "${var.name}-endpointEc2Messages"
     },
     var.tags
   )
@@ -213,7 +227,7 @@ resource "aws_vpc_endpoint" "ssm" {
 
   tags = merge(
     {
-      Name = "endpointSsm"
+      Name = "${var.name}-endpointSsm"
     },
     var.tags
   )
@@ -233,7 +247,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 
   tags = merge(
     {
-      Name = "endpointSsmMessages"
+      Name = "${var.name}-endpointSsmMessages"
     },
     var.tags
   )
@@ -249,7 +263,7 @@ resource "aws_eip" "nat" {
 
   tags = merge(
     {
-      Name = "ElasticIP"
+      Name = "${var.name}-NatElasticIP"
     },
     var.tags
   )
@@ -265,96 +279,7 @@ resource "aws_nat_gateway" "default" {
 
   tags = merge(
     {
-      Name = "gwNAT"
-    },
-    var.tags
-  )
-}
-
-#
-# Bastion resources
-#
-resource "aws_security_group" "bastion" {
-  name_prefix = "sgBastion"
-  vpc_id      = aws_vpc.default.id
-
-  tags = merge(
-    {
-      Name = "sgBastion"
-    },
-    var.tags
-  )
-}
-
-resource "aws_security_group_rule" "bastion_vpc_endpoint_egress" {
-  type      = "egress"
-  from_port = 443
-  to_port   = 443
-  protocol  = "tcp"
-
-  security_group_id        = aws_security_group.bastion.id
-  source_security_group_id = aws_security_group.vpc_endpoint.id
-
-  description = "Allow outbound TCP traffic to the interface VPC endpoints on 443."
-}
-
-resource "aws_security_group_rule" "vpc_endpoint_bastion_ingress" {
-  type      = "ingress"
-  from_port = 443
-  to_port   = 443
-  protocol  = "tcp"
-
-  security_group_id        = aws_security_group.vpc_endpoint.id
-  source_security_group_id = aws_security_group.bastion.id
-
-  description = "Allow inbound TCP traffic from the bastion on 443."
-}
-
-data "aws_iam_policy_document" "ec2_assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "bastion" {
-  name_prefix        = "BastionRole"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
-
-  tags = var.tags
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
-  role       = aws_iam_role.bastion.name
-  policy_arn = var.aws_ssm_managed_instance_core_policy_arn
-}
-
-resource "aws_iam_instance_profile" "bastion" {
-  name_prefix = "BastionInstanceProfile"
-  role        = aws_iam_role.bastion.name
-
-  tags = var.tags
-}
-
-resource "aws_instance" "bastion" {
-  ami                    = var.bastion_ami
-  availability_zone      = var.availability_zones[0]
-  ebs_optimized          = true
-  iam_instance_profile   = aws_iam_instance_profile.bastion.id
-  instance_type          = var.bastion_instance_type
-  monitoring             = true
-  subnet_id              = aws_subnet.private[0].id
-  vpc_security_group_ids = [aws_security_group.bastion.id]
-
-  tags = merge(
-    {
-      Name = "Bastion"
+      Name = "${var.name}-gwNAT"
     },
     var.tags
   )
