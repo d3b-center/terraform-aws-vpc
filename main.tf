@@ -164,32 +164,14 @@ resource "aws_vpc_endpoint" "s3" {
   )
 }
 
-#
-# Interface VPC endpoint resources
-#
-resource "aws_security_group" "vpc_endpoint" {
-  name_prefix = "sgVpcEndpoint"
-  vpc_id      = aws_vpc.default.id
-
-  tags = merge(
-    {
-      Name = "sgVpcEndpoint"
-    },
-    var.tags
-  )
-}
-
 resource "aws_vpc_endpoint" "ec2messages" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.ec2messages"
-  vpc_endpoint_type = "Interface"
 
-  security_group_ids = [
-    aws_security_group.vpc_endpoint.id
-  ]
-
-  subnet_ids          = aws_subnet.private.*.id
-  private_dns_enabled = true
+  route_table_ids = flatten([
+    aws_route_table.public.id,
+    aws_route_table.private.*.id
+  ])
 
   tags = merge(
     {
@@ -202,14 +184,11 @@ resource "aws_vpc_endpoint" "ec2messages" {
 resource "aws_vpc_endpoint" "ssm" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.ssm"
-  vpc_endpoint_type = "Interface"
-
-  security_group_ids = [
-    aws_security_group.vpc_endpoint.id
-  ]
-
-  subnet_ids          = aws_subnet.private.*.id
-  private_dns_enabled = true
+  
+  route_table_ids = flatten([
+    aws_route_table.public.id,
+    aws_route_table.private.*.id
+  ])
 
   tags = merge(
     {
@@ -222,14 +201,11 @@ resource "aws_vpc_endpoint" "ssm" {
 resource "aws_vpc_endpoint" "ssmmessages" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.ssmmessages"
-  vpc_endpoint_type = "Interface"
-
-  security_group_ids = [
-    aws_security_group.vpc_endpoint.id
-  ]
-
-  subnet_ids          = aws_subnet.private.*.id
-  private_dns_enabled = true
+  
+  route_table_ids = flatten([
+    aws_route_table.public.id,
+    aws_route_table.private.*.id
+  ])
 
   tags = merge(
     {
@@ -274,88 +250,4 @@ resource "aws_nat_gateway" "default" {
 #
 # Bastion resources
 #
-resource "aws_security_group" "bastion" {
-  name_prefix = "sgBastion"
-  vpc_id      = aws_vpc.default.id
 
-  tags = merge(
-    {
-      Name = "sgBastion"
-    },
-    var.tags
-  )
-}
-
-resource "aws_security_group_rule" "bastion_vpc_endpoint_egress" {
-  type      = "egress"
-  from_port = 443
-  to_port   = 443
-  protocol  = "tcp"
-
-  security_group_id        = aws_security_group.bastion.id
-  source_security_group_id = aws_security_group.vpc_endpoint.id
-
-  description = "Allow outbound TCP traffic to the interface VPC endpoints on 443."
-}
-
-resource "aws_security_group_rule" "vpc_endpoint_bastion_ingress" {
-  type      = "ingress"
-  from_port = 443
-  to_port   = 443
-  protocol  = "tcp"
-
-  security_group_id        = aws_security_group.vpc_endpoint.id
-  source_security_group_id = aws_security_group.bastion.id
-
-  description = "Allow inbound TCP traffic from the bastion on 443."
-}
-
-data "aws_iam_policy_document" "ec2_assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "bastion" {
-  name_prefix        = "BastionRole"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
-
-  tags = var.tags
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
-  role       = aws_iam_role.bastion.name
-  policy_arn = var.aws_ssm_managed_instance_core_policy_arn
-}
-
-resource "aws_iam_instance_profile" "bastion" {
-  name_prefix = "BastionInstanceProfile"
-  role        = aws_iam_role.bastion.name
-
-  tags = var.tags
-}
-
-resource "aws_instance" "bastion" {
-  ami                    = var.bastion_ami
-  availability_zone      = var.availability_zones[0]
-  ebs_optimized          = true
-  iam_instance_profile   = aws_iam_instance_profile.bastion.id
-  instance_type          = var.bastion_instance_type
-  monitoring             = true
-  subnet_id              = aws_subnet.private[0].id
-  vpc_security_group_ids = [aws_security_group.bastion.id]
-
-  tags = merge(
-    {
-      Name = "Bastion"
-    },
-    var.tags
-  )
-}
