@@ -1,6 +1,7 @@
 #
 # VPC resources
 #
+
 resource "aws_vpc" "default" {
   cidr_block                       = var.cidr_block
   enable_dns_support               = true
@@ -20,7 +21,7 @@ resource "aws_internet_gateway" "default" {
 
   tags = merge(
     {
-      Name = "gwInternet"
+      Name = "${var.name}-gwInternet"
     },
     var.tags
   )
@@ -31,7 +32,7 @@ resource "aws_egress_only_internet_gateway" "default" {
 
   tags = merge(
     {
-      Name = "gwInternetEgressOnly"
+      Name = "${var.name}-gwInternetEgressOnly"
     },
     var.tags
   )
@@ -44,7 +45,7 @@ resource "aws_route_table" "private" {
 
   tags = merge(
     {
-      Name = "PrivateRouteTable"
+      Name = "${var.name}-PrivateRouteTable"
     },
     var.tags
   )
@@ -72,7 +73,7 @@ resource "aws_route_table" "public" {
 
   tags = merge(
     {
-      Name = "PublicRouteTable"
+      Name = "${var.name}-PublicRouteTable"
     },
     var.tags
   )
@@ -105,7 +106,7 @@ resource "aws_subnet" "private" {
 
   tags = merge(
     {
-      Name = "PrivateSubnet"
+      Name = "${var.name}-PrivateSubnet"
     },
     var.tags
   )
@@ -127,7 +128,7 @@ resource "aws_subnet" "public" {
 
   tags = merge(
     {
-      Name = "PublicSubnet"
+      Name = "${var.name}-PublicSubnet"
     },
     var.tags
   )
@@ -158,24 +159,59 @@ resource "aws_vpc_endpoint" "s3" {
 
   tags = merge(
     {
-      Name = "endpointS3"
+      Name = "${var.name}-endpointS3"
     },
     var.tags
   )
 }
 
-resource "aws_vpc_endpoint" "ec2messages" {
-  vpc_id            = aws_vpc.default.id
-  service_name      = "com.amazonaws.${var.region}.ec2messages"
-
-  route_table_ids = flatten([
-    aws_route_table.public.id,
-    aws_route_table.private.*.id
-  ])
+#
+# Interface VPC endpoint resources
+#
+resource "aws_security_group" "vpc_endpoint" {
+  name_prefix = "sgVpcEndpoint"
+  vpc_id      = aws_vpc.default.id
 
   tags = merge(
     {
-      Name = "endpointEc2Messages"
+      Name = "${var.name}-sgVpcEndpoint"
+    },
+    var.tags
+  )
+}
+
+data "aws_vpc" "vpc_data" {
+  id = aws_vpc.default.id
+}
+
+resource "aws_security_group_rule" "vpc_endpoint_ingress" {
+  type      = "ingress"
+  from_port = 443
+  to_port   = 443
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.vpc_endpoint.id
+  cidr_blocks = [data.aws_vpc.vpc_data.cidr_block]
+
+  description = "Allow inbound TCP traffic from the VPC on 443."
+}
+
+
+resource "aws_vpc_endpoint" "ec2messages" {
+  vpc_id            = aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.region}.ec2messages"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint.id
+  ]
+
+  subnet_ids          = aws_subnet.private.*.id
+  private_dns_enabled = true
+
+  tags = merge(
+    {
+      Name = "${var.name}-endpointEc2Messages"
     },
     var.tags
   )
@@ -184,15 +220,18 @@ resource "aws_vpc_endpoint" "ec2messages" {
 resource "aws_vpc_endpoint" "ssm" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.ssm"
-  
-  route_table_ids = flatten([
-    aws_route_table.public.id,
-    aws_route_table.private.*.id
-  ])
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint.id
+  ]
+
+  subnet_ids          = aws_subnet.private.*.id
+  private_dns_enabled = true
 
   tags = merge(
     {
-      Name = "endpointSsm"
+      Name = "${var.name}-endpointSsm"
     },
     var.tags
   )
@@ -201,15 +240,18 @@ resource "aws_vpc_endpoint" "ssm" {
 resource "aws_vpc_endpoint" "ssmmessages" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.ssmmessages"
-  
-  route_table_ids = flatten([
-    aws_route_table.public.id,
-    aws_route_table.private.*.id
-  ])
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint.id
+  ]
+
+  subnet_ids          = aws_subnet.private.*.id
+  private_dns_enabled = true
 
   tags = merge(
     {
-      Name = "endpointSsmMessages"
+      Name = "${var.name}-endpointSsmMessages"
     },
     var.tags
   )
@@ -225,7 +267,7 @@ resource "aws_eip" "nat" {
 
   tags = merge(
     {
-      Name = "ElasticIP"
+      Name = "${var.name}-NatElasticIP"
     },
     var.tags
   )
@@ -241,13 +283,8 @@ resource "aws_nat_gateway" "default" {
 
   tags = merge(
     {
-      Name = "gwNAT"
+      Name = "${var.name}-gwNAT"
     },
     var.tags
   )
 }
-
-#
-# Bastion resources
-#
-
