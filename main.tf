@@ -106,7 +106,7 @@ resource "aws_subnet" "private" {
 
   tags = merge(
     {
-      Name = "${var.name}-PrivateSubnet"
+      Name = "${var.name}-PrivateSubnet-private-az${var.availability_zones[count.index]}"
     },
     var.tags
   )
@@ -128,7 +128,7 @@ resource "aws_subnet" "public" {
 
   tags = merge(
     {
-      Name = "${var.name}-PublicSubnet"
+      Name = "${var.name}-PublicSubnet-public-az${var.availability_zones[count.index]}"
     },
     var.tags
   )
