@@ -45,7 +45,7 @@ resource "aws_route_table" "private" {
 
   tags = merge(
     {
-      Name = "${var.name}-PrivateRouteTable"
+      Name = "${var.name}-PrivateRouteTable-${var.availability_zones[count.index]}"
     },
     var.tags
   )
@@ -263,7 +263,7 @@ resource "aws_eip" "nat" {
 
   tags = merge(
     {
-      Name = "${var.name}-NatElasticIP"
+      Name = "${var.name}-NatElasticIP-${var.availability_zones[count.index]}"
     },
     var.tags
   )
@@ -279,7 +279,7 @@ resource "aws_nat_gateway" "default" {
 
   tags = merge(
     {
-      Name = "${var.name}-gwNAT"
+      Name = "${var.name}-gwNAT-${var.availability_zones[count.index]}"
     },
     var.tags
   )
