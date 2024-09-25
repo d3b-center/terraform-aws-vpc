@@ -255,7 +255,7 @@ resource "aws_vpc_endpoint" "secretsmanager" {
 
 resource "aws_vpc_endpoint" "cloudwatch" {
   vpc_id            = aws_vpc.default.id
-  service_name      = "com.amazonaws.${var.region}.cloudwatch"
+  service_name      = "com.amazonaws.${var.region}.monitoring"
   vpc_endpoint_type = "Interface"
 
   security_group_ids = [
