@@ -250,6 +250,47 @@ resource "aws_vpc_endpoint" "secretsmanager" {
   )
 }
 
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id            = aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.region}.ecr.api"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint.id
+  ]
+
+  subnet_ids          = aws_subnet.private.*.id
+  private_dns_enabled = true
+
+  tags = merge(
+    {
+      Name = "${var.name}-endpointECR_API"
+    },
+    var.tags
+  )
+}
+
+
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id            = aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.region}.ecr.dkr"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.vpc_endpoint.id
+  ]
+
+  subnet_ids          = aws_subnet.private.*.id
+  private_dns_enabled = true
+
+  tags = merge(
+    {
+      Name = "${var.name}-endpointECR_DKR"
+    },
+    var.tags
+  )
+}
+
 resource "aws_vpc_endpoint" "ssmmessages" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.ssmmessages"
