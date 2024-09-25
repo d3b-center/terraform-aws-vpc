@@ -236,14 +236,11 @@ resource "aws_vpc_endpoint" "ssm" {
 resource "aws_vpc_endpoint" "secretsmanager" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.secretsmanager"
-  vpc_endpoint_type = "Interface"
 
-  security_group_ids = [
-    aws_security_group.vpc_endpoint.id
-  ]
-
-  subnet_ids          = aws_subnet.private.*.id
-  private_dns_enabled = true
+  route_table_ids = flatten([
+    aws_route_table.public.id,
+    aws_route_table.private.*.id
+  ])
 
   tags = merge(
     {
