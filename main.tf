@@ -247,7 +247,7 @@ resource "aws_vpc_endpoint" "secretsmanager" {
 
   tags = merge(
     {
-      Name = "${var.name}-endpointSsm"
+      Name = "${var.name}-endpointSecretsManager"
     },
     var.tags
   )
