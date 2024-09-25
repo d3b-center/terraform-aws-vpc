@@ -233,7 +233,7 @@ resource "aws_vpc_endpoint" "ssm" {
   )
 }
 
-resource "aws_vpc_endpoint" "ssm" {
+resource "aws_vpc_endpoint" "secretsmanager" {
   vpc_id            = aws_vpc.default.id
   service_name      = "com.amazonaws.${var.region}.secretsmanager"
   vpc_endpoint_type = "Interface"
