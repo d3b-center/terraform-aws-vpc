@@ -340,7 +340,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 resource "aws_eip" "nat" {
   count = length(var.public_subnet_cidr_blocks)
 
-  vpc = true
+  domain = "vpc"
 
   tags = merge(
     {
