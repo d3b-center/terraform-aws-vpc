@@ -6,7 +6,7 @@ resource "aws_vpc" "default" {
   cidr_block                       = var.cidr_block
   enable_dns_support               = true
   enable_dns_hostnames             = true
-  assign_generated_ipv6_cidr_block = true
+  assign_generated_ipv6_cidr_block = var.ipv6_enabled
 
   tags = merge(
     {
@@ -61,7 +61,7 @@ resource "aws_route" "private" {
 
 
 resource "aws_route" "ipv6_private" {
-  count = length(var.private_subnet_cidr_blocks)
+  count = var.ipv6_enabled ? length(var.private_subnet_cidr_blocks) : 0
 
   route_table_id              = aws_route_table.private[count.index].id
   destination_ipv6_cidr_block = "::/0"
@@ -86,6 +86,7 @@ resource "aws_route" "public" {
 }
 
 resource "aws_route" "ipv6_public" {
+  count = var.ipv6_enabled ? 1 : 0
   route_table_id              = aws_route_table.public.id
   destination_ipv6_cidr_block = "::/0"
   gateway_id                  = aws_internet_gateway.default.id
@@ -95,12 +96,12 @@ resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidr_blocks)
 
   vpc_id                                         = aws_vpc.default.id
-  assign_ipv6_address_on_creation                = true
+  assign_ipv6_address_on_creation                = var.ipv6_enabled
   cidr_block                                     = var.private_subnet_cidr_blocks[count.index]
   enable_dns64                                   = true
   enable_resource_name_dns_aaaa_record_on_launch = true
   enable_resource_name_dns_a_record_on_launch    = true
-  ipv6_cidr_block                                = cidrsubnet(aws_vpc.default.ipv6_cidr_block, 8, var.private_subnet_ipv6_prefix_indices[count.index])
+  ipv6_cidr_block                                = var.ipv6_enabled ? cidrsubnet(aws_vpc.default.ipv6_cidr_block, 8, var.private_subnet_ipv6_prefix_indices[count.index]) : null
   availability_zone                              = var.availability_zones[count.index]
   private_dns_hostname_type_on_launch            = "resource-name"
 
@@ -116,12 +117,12 @@ resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidr_blocks)
 
   vpc_id                                         = aws_vpc.default.id
-  assign_ipv6_address_on_creation                = true
+  assign_ipv6_address_on_creation                = var.ipv6_enabled
   cidr_block                                     = var.public_subnet_cidr_blocks[count.index]
   enable_dns64                                   = true
   enable_resource_name_dns_aaaa_record_on_launch = true
   enable_resource_name_dns_a_record_on_launch    = true
-  ipv6_cidr_block                                = cidrsubnet(aws_vpc.default.ipv6_cidr_block, 8, var.public_subnet_ipv6_prefix_indices[count.index])
+  ipv6_cidr_block                                = var.ipv6_enabled ? cidrsubnet(aws_vpc.default.ipv6_cidr_block, 8, var.public_subnet_ipv6_prefix_indices[count.index]) : null
   availability_zone                              = var.availability_zones[count.index]
   map_public_ip_on_launch                        = true
   private_dns_hostname_type_on_launch            = "resource-name"

@@ -21,6 +21,12 @@ variable "public_subnet_cidr_blocks" {
   description = "A list of CIDR ranges for public subnets."
 }
 
+variable "ipv6_enabled" {
+  type = bool
+  default = true
+  description = "value"
+}
+
 variable "public_subnet_ipv6_prefix_indices" {
   type        = list(number)
   default     = [0, 2]
