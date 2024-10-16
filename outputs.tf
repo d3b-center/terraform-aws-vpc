@@ -18,11 +18,6 @@ output "cidr_block" {
   description = "The CIDR range for the entire VPC."
 }
 
-output "ipv6_cidr_block" {
-  value       = aws_vpc.default.ipv6_cidr_block
-  description = "The IPv6 CIDR range for the entire VPC."
-}
-
 output "nat_gateway_ips" {
   value       = [aws_eip.nat.*.public_ip]
   description = "Public IP addresses of the VPC NAT gateways."
