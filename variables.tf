@@ -21,28 +21,10 @@ variable "public_subnet_cidr_blocks" {
   description = "A list of CIDR ranges for public subnets."
 }
 
-variable "ipv6_enabled" {
-  type = bool
-  default = true
-  description = "value"
-}
-
-variable "public_subnet_ipv6_prefix_indices" {
-  type        = list(number)
-  default     = [0, 2]
-  description = "A list of indices corresponding to IPv6 prefixes for public subnets."
-}
-
 variable "private_subnet_cidr_blocks" {
   type        = list(string)
   default     = ["10.0.1.0/24", "10.0.3.0/24"]
   description = "A list of CIDR ranges for private subnets."
-}
-
-variable "private_subnet_ipv6_prefix_indices" {
-  type        = list(number)
-  default     = [1, 3]
-  description = "A list of indices corresponding to IPv6 prefixes for private subnets."
 }
 
 variable "availability_zones" {
