@@ -321,8 +321,6 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 resource "aws_eip" "nat" {
   count = length(var.public_subnet_cidr_blocks)
 
-  vpc = true
-
   tags = merge(
     {
       Name = "${var.name}-NatElasticIP-${var.availability_zones[count.index]}"
